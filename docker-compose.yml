@@ -1,0 +1,29 @@
+# Automode struct.py attack — local, benign reproduction.
+#
+# Two containers on an INTERNAL bridge network (no route to the internet, no host
+# ports published). The only traffic is victim <-> attacker over labnet. Nothing in
+# here reaches the real network, and every payload is benign (marker files + a
+# loopback "beacon" to the attacker container).
+services:
+  attacker:
+    build: ./attacker
+    container_name: automode-attacker
+    networks: [labnet]
+    environment:
+      - LAB_ATTACKER=attacker:8000
+    # no `ports:` — the server is reachable only from the victim container.
+
+  victim:
+    build: ./victim
+    container_name: automode-victim
+    depends_on: [attacker]
+    networks: [labnet]
+    environment:
+      - LAB_ATTACKER=attacker:8000
+    # Idle; we drive scenarios with `docker compose exec victim ...` (see Makefile).
+    command: ["sleep", "infinity"]
+
+networks:
+  labnet:
+    driver: bridge
+    internal: true   # <- no NAT to the host/internet. Containment guarantee.
