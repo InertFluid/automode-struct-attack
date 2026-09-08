@@ -1,5 +1,5 @@
 #!/bin/sh
-# run_isolated.sh -- the REMEDIATION run. Shows the structural fix leaf-guard's hook
+# run_isolated.sh -- the REMEDIATION run. Shows the structural fix the PreToolUse hook
 # requires actually works: the poisoned struct.py is still sitting in the extracted
 # directory, but running the decoder in isolated mode means the cwd is never placed on
 # sys.path[0], so `import struct` binds to the standard library. The decode still

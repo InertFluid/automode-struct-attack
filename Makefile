@@ -1,4 +1,4 @@
-# Automode struct.py attack -- local benign reproduction + leaf-guard protection.
+# Automode struct.py attack -- local benign reproduction + PreToolUse-hook protection.
 # All targets operate on the two containers defined in docker-compose.yml.
 DC = docker compose
 
@@ -9,7 +9,7 @@ help:
 	@echo "  make build     - build attacker + victim images"
 	@echo "  make up        - start both containers (internal network, no host ports)"
 	@echo "  make attack    - UNPROTECTED run  -> expect COMPROMISED"
-	@echo "  make guarded   - leaf-guard hook  -> expect SAFE (blocked at stage 3)"
+	@echo "  make guarded   - PreToolUse hook  -> expect SAFE (blocked at stage 3)"
 	@echo "  make isolated  - remediated run   -> shadow present but never loaded"
 	@echo "  make verify    - report marker + beacon proofs from the last run"
 	@echo "  make logs      - attacker server logs (beacons show here)"
@@ -33,8 +33,8 @@ attack:
 	@$(DC) exec victim sh /work/verify.sh
 
 guarded:
-	@echo "### PROTECTED (leaf-guard PreToolUse hook) ###"
-	$(DC) exec victim sh /work/leafguard/run_guarded.sh || true
+	@echo "### PROTECTED (PreToolUse hook) ###"
+	$(DC) exec victim sh /work/guard/run_guarded.sh || true
 	@$(DC) exec victim sh /work/verify.sh
 
 isolated:

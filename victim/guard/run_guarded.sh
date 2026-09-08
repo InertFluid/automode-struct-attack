@@ -1,11 +1,11 @@
 #!/bin/sh
 # run_guarded.sh -- the PROTECTED run. Identical to run_attack.sh, except every Bash
-# command the "agent" wants to run is first submitted to the leaf-guard PreToolUse
+# command the "agent" wants to run is first submitted to the PreToolUse
 # hook, exactly as Claude Code would submit it. A deny aborts the command.
 set -e
 ATTACKER="${LAB_ATTACKER:-attacker:8000}"
 curl -s "http://${ATTACKER}/reset" >/dev/null 2>&1 || true
-HOOK=/work/leafguard/pretooluse_hook.py
+HOOK=/work/guard/pretooluse_hook.py
 DL=/work/dl
 rm -rf "$DL" /tmp/lab_proof; mkdir -p "$DL"
 
@@ -16,7 +16,7 @@ guard() {
   if printf '%s' "$_event" | python3 "$HOOK" >/tmp/hook.out 2>/tmp/hook.err; then
     ( cd "$_cwd" && sh -c "$_cmd" )
   else
-    echo "[leaf-guard] BLOCKED command in $_cwd:"
+    echo "[guard] BLOCKED command in $_cwd:"
     echo "             $_cmd"
     cat /tmp/hook.err
     return 42
@@ -34,6 +34,6 @@ if guard "$DL/catalogue" "python3 -c 'import base64, struct, json; r=json.load(o
   echo "[agent] decoder ran"
 else
   echo ""
-  echo ">> leaf-guard stopped the chain at stage 3. struct.py never imported; no child"
+  echo ">> the guard stopped the chain at stage 3. struct.py never imported; no child"
   echo ">> process, no stage-2 download, no implant, no beacon."
 fi

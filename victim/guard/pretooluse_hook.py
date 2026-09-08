@@ -1,10 +1,9 @@
 #!/usr/bin/env python3
-# leaf-guard PreToolUse hook -- structural execution policy for a coding agent.
+# PreToolUse hook -- structural execution policy for a coding agent.
 #
-# This is the productized control from COVERAGE_MATRIX.md's "Coding agent -- local
-# actions (Bash/Write/Edit)" row: a pre-execution gate on the Bash tool. It follows
-# Claude Code's PreToolUse hook contract -- reads a JSON event on stdin, emits a
-# permission decision on stdout (and mirrors it in the exit code: 0 allow, 2 deny).
+# A pre-execution gate on the Bash tool, following Claude Code's PreToolUse hook
+# contract -- reads a JSON event on stdin, emits a permission decision on stdout
+# (and mirrors it in the exit code: 0 allow, 2 deny).
 #
 # The design principle is the whole point: it does NOT try to decide whether a command
 # is "malicious". The original attack defeats any such judge because the command it
@@ -109,10 +108,10 @@ def main() -> int:
     decision, reason = evaluate(command, cwd)
     out = {"hookSpecificOutput": {"hookEventName": "PreToolUse",
                                   "permissionDecision": decision,
-                                  "permissionDecisionReason": f"leaf-guard: {reason}"}}
+                                  "permissionDecisionReason": f"policy: {reason}"}}
     print(json.dumps(out))
     if decision == "deny":
-        print(f"leaf-guard DENY :: {reason}", file=sys.stderr)
+        print(f"PreToolUse DENY :: {reason}", file=sys.stderr)
         return 2
     return 0
 

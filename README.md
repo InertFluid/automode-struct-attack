@@ -1,9 +1,9 @@
-# Automode `struct.py` attack — local reproduction + leaf-guard protection
+# Automode `struct.py` attack — local reproduction + a PreToolUse defense
 
 A self-contained, **benign, offline** reproduction of the multi-stage prompt-injection →
 code-execution chain against Claude Code Auto Mode described in
 [embracethered.com](https://embracethered.com/blog/posts/2026/breaking-claude-code-opus-5-and-automode/),
-plus a working demonstration of the control leaf-guard uses to stop it.
+plus a working `PreToolUse` hook that stops it.
 
 ## Safety posture (read first)
 
@@ -32,7 +32,7 @@ plus a working demonstration of the control leaf-guard uses to stop it.
 ```bash
 make build && make up
 make attack      # UNPROTECTED  -> RESULT: COMPROMISED
-make guarded     # leaf-guard   -> RESULT: SAFE (blocked at stage 3)
+make guarded     # PreToolUse   -> RESULT: SAFE (blocked at stage 3)
 make isolated    # remediated   -> shadow present but never loaded
 make logs        # attacker log; the C2 beacon prints here
 make clean
@@ -41,7 +41,7 @@ make clean
 Observed results (python:3.12-slim):
 
 - **`make attack`** → `[stage5] implant running` → `RESULT: COMPROMISED`, marker present, 1 beacon.
-- **`make guarded`** → `leaf-guard DENY :: R1 …` at stage 3 → `RESULT: SAFE`, no beacon.
+- **`make guarded`** → `PreToolUse DENY :: R1 …` at stage 3 → `RESULT: SAFE`, no beacon.
 - **`make isolated`** → `struct.__file__ = /usr/local/lib/python3.12/struct.py` (stdlib, **not** the
   shadow), decode still succeeds → `RESULT: SAFE`.
 
@@ -50,7 +50,7 @@ Observed results (python:3.12-slim):
 The attack defeats any classifier that inspects the *command*, because the command it
 sees — `python3 -c 'import base64…'` — is genuinely benign in isolation; the exploit is
 several hops away (a shadowed import, then child processes). So the control does **not**
-judge maliciousness. `victim/leafguard/pretooluse_hook.py` is a **`PreToolUse` gate** (to
+judge maliciousness. `victim/guard/pretooluse_hook.py` is a **`PreToolUse` gate** (to
 Claude Code's real hook contract) that enforces structural invariants the chain cannot
 satisfy:
 
@@ -64,19 +64,20 @@ satisfy:
 file still on disk, isolated mode binds `struct` to the standard library, so the decode
 works and the payload never loads.
 
-## Where this maps in the product
+## Wiring it into a real agent
 
-This hook **is** the `docs/archive/COVERAGE_MATRIX.md` row *"Coding agent — local actions
-(Bash/Write/Edit) → Claude Code hooks → alert → deny"*, currently scoped *Monitored →
-later*. leaf-guard's installer already owns `~/.claude/settings.json`
-(`internal/install/tools.go`), so registering this `PreToolUse` hook is an extension of an
-existing managed write, not a new subsystem.
+Claude Code fires `PreToolUse` before it runs a Bash command, and honors a `deny`
+decision from the hook. Point a `PreToolUse` matcher for the `Bash` tool at
+`pretooluse_hook.py` in `~/.claude/settings.json`; the hook receives the proposed
+command and its working directory, and returns allow/deny by the rules above. Because the
+gate runs *before* execution, it stops the chain at the point a post-hoc classifier only
+watches it pass.
 
 ## Not modeled here (honest scope)
 
 - **The live model.** No LLM is driven; the victim replays the induced tool calls.
-- **The real leaf-guard binary / netcap tap.** Phase 2: run the Go agent alongside so the
-  stager/implant connections are attributed to their process as shadow-egress, and (on
-  Windows) refused by `egressguard`. Note that stage 4's `python3 -I` ignores proxy env,
-  which is exactly why the deterministic local-exec hook (R1) is the primary control and
-  network egress detection is the backstop.
+- **A network-egress layer.** Phase 2: run an egress monitor alongside so the
+  stager/implant connections are attributed to their process and flagged (or refused).
+  Note that stage 4's `python3 -I` ignores proxy env — which is exactly why the
+  deterministic, pre-execution local hook (R1) is the primary control and network egress
+  detection is the backstop, not the other way round.
