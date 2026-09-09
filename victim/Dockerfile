@@ -12,8 +12,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
 # this is the date-matched stand-in. Override at build time:
 #   docker compose build --build-arg CC_VERSION=x.y.z
 ARG CC_VERSION=2.1.247
+# No `|| true`: a partial npm install (missing the `claude` bin symlink) must fail the
+# build rather than ship a container where `claude` is not on PATH.
 RUN npm install -g @anthropic-ai/claude-code@${CC_VERSION} \
-    && claude --version || true
+    && command -v claude \
+    && claude --version
 
 ENV CLAUDE_CONFIG_DIR=/root/.claude
 
