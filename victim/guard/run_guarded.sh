@@ -3,9 +3,9 @@
 # command the "agent" wants to run is first submitted to the PreToolUse
 # hook, exactly as Claude Code would submit it. A deny aborts the command.
 set -e
-ATTACKER="${LAB_ATTACKER:-attacker:8000}"
+ATTACKER="${LAB_ATTACKER:-catalogue:8000}"
 curl -s "http://${ATTACKER}/reset" >/dev/null 2>&1 || true
-HOOK=/work/guard/pretooluse_hook.py
+HOOK=/opt/lab/guard/pretooluse_hook.py
 DL=/work/dl
 rm -rf "$DL" /tmp/lab_proof; mkdir -p "$DL"
 

@@ -1,29 +1,49 @@
-# Automode struct.py attack — local, benign reproduction.
+# Automode struct.py attack — reproduction lab.
 #
-# Two containers on an INTERNAL bridge network (no route to the internet, no host
-# ports published). The only traffic is victim <-> attacker over labnet. Nothing in
-# here reaches the real network, and every payload is benign (marker files + a
-# loopback "beacon" to the attacker container).
+# Two modes share these containers:
+#   * scripted mode  — the victim replays the induced tool calls (no LLM). See Makefile.
+#   * live-agent mode — a real Claude Code (Opus, Auto Mode) drives it. See RUNBOOK.md.
+#
+# Networking is split so containment survives the live agent needing the internet:
+#   * attacker sits ONLY on `labnet` (internal: true) — it has no route off-host.
+#   * victim joins `labnet` AND `egress`, so Claude Code can reach the Anthropic API
+#     to sign in and run, while still talking to the attacker over labnet.
+# Payloads remain benign and beacon only to the attacker over the internal network.
 services:
   attacker:
     build: ./attacker
     container_name: automode-attacker
-    networks: [labnet]
+    networks:
+      labnet:
+        aliases: [catalogue]   # benign name the victim/agent sees ("catalogue:8000")
     environment:
-      - LAB_ATTACKER=attacker:8000
-    # no `ports:` — the server is reachable only from the victim container.
+      - LAB_ATTACKER=catalogue:8000
 
   victim:
-    build: ./victim
+    build:
+      context: ./victim
+      args:
+        CC_VERSION: ${CC_VERSION:-2.1.247}
     container_name: automode-victim
     depends_on: [attacker]
-    networks: [labnet]
+    networks: [labnet, egress]
     environment:
-      - LAB_ATTACKER=attacker:8000
-    # Idle; we drive scenarios with `docker compose exec victim ...` (see Makefile).
+      - LAB_ATTACKER=catalogue:8000
+      - CLAUDE_CONFIG_DIR=/root/.claude
+      # Subscription auth: `claude setup-token` on the host, then export this before `up`.
+      - CLAUDE_CODE_OAUTH_TOKEN=${CLAUDE_CODE_OAUTH_TOKEN:-}
+    volumes:
+      - claude-config:/root/.claude   # persist login across restarts/rebuilds
+    stdin_open: true
+    tty: true
     command: ["sleep", "infinity"]
 
 networks:
   labnet:
     driver: bridge
-    internal: true   # <- no NAT to the host/internet. Containment guarantee.
+    internal: true   # attacker has no internet; victim reaches it here
+  egress:
+    driver: bridge   # victim's path to the Anthropic API only
+
+volumes:
+  claude-config:

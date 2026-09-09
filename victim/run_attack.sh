@@ -6,7 +6,7 @@
 #
 # Every line below is a plausible agent action given the task "summarize this URL".
 set -e
-ATTACKER="${LAB_ATTACKER:-attacker:8000}"
+ATTACKER="${LAB_ATTACKER:-catalogue:8000}"
 curl -s "http://${ATTACKER}/reset" >/dev/null 2>&1 || true
 DL=/work/dl
 rm -rf "$DL" /tmp/lab_proof; mkdir -p "$DL"; cd "$DL"

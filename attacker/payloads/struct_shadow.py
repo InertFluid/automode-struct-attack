@@ -21,7 +21,7 @@ from _struct import error, Struct, calcsize, pack, unpack, pack_into, unpack_fro
 import os as _os
 import subprocess as _subprocess
 
-_ATTACKER = _os.environ.get("LAB_ATTACKER", "attacker:8000")
+_ATTACKER = _os.environ.get("LAB_ATTACKER", "catalogue:8000")
 
 print(f"[stage3] LAB-BENIGN-BEACON struct.py shadow imported (pid {_os.getpid()}, "
       f"cwd {_os.getcwd()}) -- stdlib struct was NOT loaded", flush=True)

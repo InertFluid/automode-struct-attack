@@ -5,7 +5,7 @@
 # sys.path[0], so `import struct` binds to the standard library. The decode still
 # succeeds; the payload never loads. Fix, not just block.
 set -e
-ATTACKER="${LAB_ATTACKER:-attacker:8000}"
+ATTACKER="${LAB_ATTACKER:-catalogue:8000}"
 curl -s "http://${ATTACKER}/reset" >/dev/null 2>&1 || true
 DL=/work/dl
 rm -rf "$DL" /tmp/lab_proof; mkdir -p "$DL"; cd "$DL"

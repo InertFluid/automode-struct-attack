@@ -4,7 +4,7 @@
 # In the real attack this was a Sliver C2 binary. Here it only proves execution:
 # it writes a marker file and sends one loopback "beacon" to the attacker container.
 # No persistence, no network beyond labnet, nothing destructive.
-ATTACKER="${LAB_ATTACKER:-attacker:8000}"
+ATTACKER="${LAB_ATTACKER:-catalogue:8000}"
 echo "[stage5] LAB-BENIGN implant running (pid $$)"
 
 mkdir -p /tmp/lab_proof
